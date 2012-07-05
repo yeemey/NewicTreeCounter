@@ -6,11 +6,14 @@
 #include <string>
 #include <vector>
 #include <ctype.h>
+#include "stack.h"
 
 //using namespace std;
 
 std::vector<std::string> Split(std::string Target, char delim);
 std::string Strip(std::string Target, char delim);
+std::string Strip(std::string Target, char delim[]);
+std::vector<std::string> FindPatterns(std::string Tree);
 bool GetFile(std::string Prompt, std::ifstream& InputFile);
 
 /*
@@ -23,27 +26,48 @@ int main() {
 	ifstream rootTree;
 	ifstream bootTrees;
 	ofstream patternCounts;
+	string testInput;
 
-	if(GetFile("Please enter in the path to the main tree file: ", rootTree)){
-		if(GetFile("Please enter in the path to the bootstrap tree file: ", bootTrees)){
+	cout << "Please enter in a string with parentheses: " << endl;
+	getline(cin, testInput);
 
-		}
+	std::vector<std::string> Patterns = FindPatterns(testInput);
+	std::cout << "The size of the Patterns is: " << Patterns.size() << endl;
+	std::cout << "The testInput is: " << testInput << endl;
+	for(int j = 0; j < Patterns.size(); ++j){
+		std::cout << "The pattern selected is: " << Patterns[j].c_str() << endl;
 	}
-	//string testInput;
-	//cout << "Please enter in a string with commas" << endl;
-	//cin >> testInput;
-	//getline(cin, testInput);
-
-//	vector<string> Tokens = Split(testInput, ',');
-//
-//	for (int j = 0; j < Tokens.size(); j++) {
-//		ostringstream convert;
-//		convert << j;
-//		string output = Tokens.at(j);
-//		cout << "This is the output at " + convert.str() + " " << output << endl;
-//	}
 
 	return 0;
+}
+
+
+/*
+ * This function takes the string and does the following:
+ * 1. Determines the length of the string.
+ * 2. Creates a stack object based on the length of the string.  The length of the string is just to determine
+ * the max height the stack can reach.  The stack uses a vector and not an array so this is not an important
+ * factor to consider when changes are made and can be changed in future updates.
+ * 3. Using an iterator, the function goes through each character in the string looking for an opening parenthesis '(' or closing parenthesis ')'.
+ * 4. If it detects an opening parenthesis, it pushes the index of the opening parenthesis on top of the Stack.  If it detects a closing parenthesis,
+ * it retrieves the last index of the opening parenthesis, and then retrieves a substring based on the opening parenthesis index and the current index where the
+ * closing parenthesis was found.  It will then pop the last index used.
+ */
+std::vector<std::string> FindPatterns(std::string Tree){
+	std::vector<std::string> Patterns;
+	int TreeLength = Tree.length();
+	Stack parensStack(TreeLength);
+
+	for(int i = 0; i < TreeLength; i++){
+		if(Tree[i] == '('){
+			parensStack.push(i);
+		}else if(Tree[i] == ')'){
+			int StartParen;
+			parensStack.pop(StartParen);
+			Patterns.push_back(Tree.substr(StartParen, i - StartParen + 1));
+		}
+	}
+	return Patterns;
 }
 
 //Split function is a simple splitter based on the delimiter given.
@@ -51,14 +75,11 @@ std::vector<std::string> Split(std::string Target, char delim) {
 //String stream will not work in this case because the stream stops at every white space before moving on to the next word.  We're looking to split on a
 	//user-defined delimiter.  We do not want to restrict the format of the function.
 	std::vector<std::string> Tokens;
-
-	//Target = Strip(Target, ' ');
 	Target = Strip(Target, ':');
 	int position_LastDelim = -1;
 	std::ostringstream convert;
 	std::ostringstream inputstring;
 	inputstring << Target;
-	//int streamlength = inputstring.str().length();
 	convert << Target.length();
 	std::cout << "Length of string is: " + convert.str() << std::endl;
 	std::cout << "This is the string: " + inputstring.str() << std::endl;
@@ -96,6 +117,25 @@ std::string Strip(std::string Target, char delim) {
 		}
 	}
 	return Target;
+}
+
+/*
+ * This stripping function will remove whatever characters are contained in the delimiters array.
+ */
+std::string Strip(std::string Target, char delim[]){
+	int initialPosition = 0;
+	for(int i = 0; i < Target.length(); ++i){
+
+	}
+	return Target;
+}
+
+/*
+ * Detects whether an array contains a specific character.
+ */
+bool Contains(char Target, char delim[]){
+
+	return false;
 }
 
 //GetFile checks that the file exists, and opens it.  Otherwise it prompts until a file path is entered.
