@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <map>
 #include <algorithm>
+//#include <direct.h>
 //#include <unistd.h>
 
 //using namespace std;
@@ -22,6 +23,7 @@ std::vector<std::vector<std::string> > BootStrapPatterns(
 		std::ifstream& InputFile);
 std::map<std::string, int> Count(std::vector<std::string> PrimaryTree,
 		std::vector<std::vector<std::string> > BootTrees);
+std::vector<std::vector<std::string> > AcquireBootPatterns(std::ifstream& InputFile);
 
 bool SearchPattern(std::string Pattern, std::vector<std::string> Target,
 		int min, int max);
@@ -29,7 +31,13 @@ bool Contains(char Target, std::vector<char> delim);
 bool GetFile(std::string Prompt, std::ifstream& InputFile);
 bool FileExists(std::string Prompt, std::string& Path,
 		std::ifstream& InputFile);
+//bool ObtainOutputParams(std::string Prompt, std::string& FileName, std::string& FilePath, std::ofstream OutputFile);
 
+std::string ExtractFileName(std::string FullFilePath);
+std::string ExtractFilePath(std::string FullFilePath);
+
+char delimArr[] = {';','.',' ',':','0','1','2','3','4','5','6','7','8','9'};
+std::vector<char> delimiters(delimArr, delimArr + sizeof(delimArr) / sizeof(char));
 /*
  * Idea: There are at a hundred bootstrapped trees to count.  The basic binary relationships should be extracted first
  * before proceeding to count.  This allows the search function to compare the string of interest
@@ -45,8 +53,8 @@ int main() {
 //	cout << "Please enter in a string with parentheses: " << endl;
 //	getline(cin, testInput);
 
-	char delimArr[] = {';','.',' ',':','0','1','2','3','4','5','6','7','8','9'};
-	std::vector<char> delimiters(delimArr, delimArr + sizeof(delimArr) / sizeof(char));
+
+
 //	testInput = Strip(testInput, delimiters);
 //	std::cout << "This is what's in the testInput: " << testInput << std::endl;
 //	std::vector<std::string> Patterns = FindPatterns(testInput);
@@ -56,29 +64,29 @@ int main() {
 //		std::cout << "The pattern selected is: " << Patterns[j].c_str() << endl;
 //	}
 
-	string ExamplePrimaryPattern = "(TYLCV_GP: 0.014972, ((((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.005754): 0.005764, TYLCV_MX_Yuc: 0.002855): 0.000004, (TYLCV_CU: 0.000004, (TYLCV_Flo: 0.000004, TYLCV_US_TX: 0.000004): 0.000004): 0.000004): 0.000004, TYLCV_DO: 0.000004): 0.000004, (((((TYLCV_MX_Sin: 0.000004, TYLCV_MX_Cul: 0.002828): 0.000004, TYLCV_MX_Sin2: 0.000004): 0.000004, TYLCV_US_CA: 0.002833): 0.002985, (TYLCV_CN_SH2: 0.002861, TYLCV_JA_Tosa: 0.000004): 0.005699): 0.005774, TYLCV_IL: 0.005821): 0.002864);";
-	ExamplePrimaryPattern = Strip(ExamplePrimaryPattern, delimiters);
-
-	string ExampleBootPatternOne = "(TYLCV_GP: 0.019721, ((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.002782): 0.008365, (TYLCV_MX_Yuc: 0.002782, ((TYLCV_CU: 0.000004, TYLCV_DO: 0.000004): 0.000004, (TYLCV_Flo: 0.000004, TYLCV_US_TX: 0.000004): 0.000004): 0.000004): 0.000004): 0.000004, ((((TYLCV_MX_Sin: 0.000004, (TYLCV_MX_Cul: 0.005556, TYLCV_MX_Sin2: 0.000004): 0.000004): 0.000004, TYLCV_US_CA: 0.002776): 0.005613, (TYLCV_CN_SH2: 0.002780, TYLCV_JA_Tosa: 0.000004): 0.005544): 0.008389, TYLCV_IL: 0.002789): 0.002786);";
-	ExampleBootPatternOne = Strip(ExampleBootPatternOne, delimiters);
-
-	string ExampleBootPatternTwo = "(TYLCV_GP: 0.013980, ((((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.000004): 0.002776, ((TYLCV_MX_Yuc: 0.000004, TYLCV_Flo: 0.000004): 0.000004, TYLCV_US_TX: 0.000004): 0.000004): 0.000004, TYLCV_CU: 0.000004): 0.000004, TYLCV_DO: 0.000004): 0.000004, (((((TYLCV_MX_Sin: 0.000004, TYLCV_MX_Cul: 0.005558): 0.000004, TYLCV_MX_Sin2: 0.000004): 0.000004, TYLCV_US_CA: 0.000004): 0.005596, (TYLCV_CN_SH2: 0.002779, TYLCV_JA_Tosa: 0.000004): 0.002767): 0.005578, TYLCV_IL: 0.000004): 0.002778);";
-	ExampleBootPatternTwo = Strip(ExampleBootPatternTwo, delimiters);
-
-	string ExampleBootPatternThree = "(TYLCV_GP: 0.011255, (((((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.005599): 0.008404, TYLCV_IL: 0.008364): 0.000004, ((TYLCV_MX_Yuc: 0.000004, TYLCV_CU: 0.000004): 0.000004, TYLCV_DO: 0.000004): 0.000004): 0.000004, TYLCV_US_TX: 0.000004): 0.000004, TYLCV_Flo: 0.000004): 0.000004, ((TYLCV_MX_Sin: 0.000004, (TYLCV_MX_Cul: 0.002785, (TYLCV_MX_Sin2: 0.000004, TYLCV_US_CA: 0.000004): 0.000004): 0.000004): 0.002790, (TYLCV_CN_SH2: 0.000004, TYLCV_JA_Tosa: 0.000004): 0.000004): 0.005582);";
-	ExampleBootPatternThree = Strip(ExampleBootPatternThree, delimiters);
-
-//	vector<string> PrimaryPattern = FindPatterns("((C,D),(A,B))");
-	vector<string> PrimaryPattern = FindPatterns(ExamplePrimaryPattern);
-
-//	for (int i = 0; i < PrimaryPattern.size(); ++i) {
-//		cout << "Primary pattern value: " << PrimaryPattern[i] << endl;
-//	}
-
-	vector<vector<string> > BootPattern;
-	BootPattern.push_back(FindPatterns(ExampleBootPatternOne));
-	BootPattern.push_back(FindPatterns(ExampleBootPatternTwo));
-	BootPattern.push_back(FindPatterns(ExampleBootPatternThree));
+//	string ExamplePrimaryPattern = "(TYLCV_GP: 0.014972, ((((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.005754): 0.005764, TYLCV_MX_Yuc: 0.002855): 0.000004, (TYLCV_CU: 0.000004, (TYLCV_Flo: 0.000004, TYLCV_US_TX: 0.000004): 0.000004): 0.000004): 0.000004, TYLCV_DO: 0.000004): 0.000004, (((((TYLCV_MX_Sin: 0.000004, TYLCV_MX_Cul: 0.002828): 0.000004, TYLCV_MX_Sin2: 0.000004): 0.000004, TYLCV_US_CA: 0.002833): 0.002985, (TYLCV_CN_SH2: 0.002861, TYLCV_JA_Tosa: 0.000004): 0.005699): 0.005774, TYLCV_IL: 0.005821): 0.002864);";
+//	ExamplePrimaryPattern = Strip(ExamplePrimaryPattern, delimiters);
+//
+//	string ExampleBootPatternOne = "(TYLCV_GP: 0.019721, ((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.002782): 0.008365, (TYLCV_MX_Yuc: 0.002782, ((TYLCV_CU: 0.000004, TYLCV_DO: 0.000004): 0.000004, (TYLCV_Flo: 0.000004, TYLCV_US_TX: 0.000004): 0.000004): 0.000004): 0.000004): 0.000004, ((((TYLCV_MX_Sin: 0.000004, (TYLCV_MX_Cul: 0.005556, TYLCV_MX_Sin2: 0.000004): 0.000004): 0.000004, TYLCV_US_CA: 0.002776): 0.005613, (TYLCV_CN_SH2: 0.002780, TYLCV_JA_Tosa: 0.000004): 0.005544): 0.008389, TYLCV_IL: 0.002789): 0.002786);";
+//	ExampleBootPatternOne = Strip(ExampleBootPatternOne, delimiters);
+//
+//	string ExampleBootPatternTwo = "(TYLCV_GP: 0.013980, ((((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.000004): 0.002776, ((TYLCV_MX_Yuc: 0.000004, TYLCV_Flo: 0.000004): 0.000004, TYLCV_US_TX: 0.000004): 0.000004): 0.000004, TYLCV_CU: 0.000004): 0.000004, TYLCV_DO: 0.000004): 0.000004, (((((TYLCV_MX_Sin: 0.000004, TYLCV_MX_Cul: 0.005558): 0.000004, TYLCV_MX_Sin2: 0.000004): 0.000004, TYLCV_US_CA: 0.000004): 0.005596, (TYLCV_CN_SH2: 0.002779, TYLCV_JA_Tosa: 0.000004): 0.002767): 0.005578, TYLCV_IL: 0.000004): 0.002778);";
+//	ExampleBootPatternTwo = Strip(ExampleBootPatternTwo, delimiters);
+//
+//	string ExampleBootPatternThree = "(TYLCV_GP: 0.011255, (((((TYLCV_US_Flo: 0.000004, TYLCV_PR: 0.005599): 0.008404, TYLCV_IL: 0.008364): 0.000004, ((TYLCV_MX_Yuc: 0.000004, TYLCV_CU: 0.000004): 0.000004, TYLCV_DO: 0.000004): 0.000004): 0.000004, TYLCV_US_TX: 0.000004): 0.000004, TYLCV_Flo: 0.000004): 0.000004, ((TYLCV_MX_Sin: 0.000004, (TYLCV_MX_Cul: 0.002785, (TYLCV_MX_Sin2: 0.000004, TYLCV_US_CA: 0.000004): 0.000004): 0.000004): 0.002790, (TYLCV_CN_SH2: 0.000004, TYLCV_JA_Tosa: 0.000004): 0.000004): 0.005582);";
+//	ExampleBootPatternThree = Strip(ExampleBootPatternThree, delimiters);
+//
+////	vector<string> PrimaryPattern = FindPatterns("((C,D),(A,B))");
+//	vector<string> PrimaryPattern = FindPatterns(ExamplePrimaryPattern);
+//
+////	for (int i = 0; i < PrimaryPattern.size(); ++i) {
+////		cout << "Primary pattern value: " << PrimaryPattern[i] << endl;
+////	}
+//
+//	vector<vector<string> > BootPattern;
+//	BootPattern.push_back(FindPatterns(ExampleBootPatternOne));
+//	BootPattern.push_back(FindPatterns(ExampleBootPatternTwo));
+//	BootPattern.push_back(FindPatterns(ExampleBootPatternThree));
 //	BootPattern.push_back(FindPatterns("(B,(A,B))"));
 //	BootPattern.push_back(FindPatterns("((B,D),(A,B))"));
 //	BootPattern.push_back(FindPatterns("((C,D),(E,F))"));
@@ -86,28 +94,100 @@ int main() {
 //	BootPattern.push_back(FindPatterns("((C,D),(E,(A,B)))"));
 //	BootPattern.push_back(FindPatterns("((R,S),(T,((C,D),(A,B))))"));
 
-	map<string, int> Counts = Count(PrimaryPattern, BootPattern);
-	for (map<string, int>::iterator p = Counts.begin(); p != Counts.end();
-			++p) {
-		cout << "Key: " << p->first << endl;
-		cout << "Value: " << p->second << endl;
-	}
-
-//	ifstream PrimaryTreeFile;
-//	string PrimaryTreePath;
-//	string PrimaryTreePrompt =
-//			"Please enter in the path of the primary tree file: ";
-//
-//	ifstream BootTreeFile;
-//	string BootTreePath;
-//	string BootTreePrompt = "Please enter in the path of the boot tree file: ";
-//
-//	if (FileExists(PrimaryTreePrompt, PrimaryTreePath, PrimaryTreeFile)
-//			&& FileExists(BootTreePrompt, BootTreePath, BootTreeFile)) {
-//
+//	map<string, int> Counts = Count(PrimaryPattern, BootPattern);
+//	for (map<string, int>::iterator p = Counts.begin(); p != Counts.end();
+//			++p) {
+//		cout << "Key: " << p->first << endl;
+//		cout << "Value: " << p->second << endl;
 //	}
 
+	ifstream PrimaryTreeFile;
+	string PrimaryTreePath;
+	string PrimaryTreePrompt =
+			"Please enter in the path of the primary tree file: ";
+
+	ifstream BootTreeFile;
+	string BootTreePath;
+	string BootTreePrompt = "Please enter in the path of the boot tree file: ";
+
+	ofstream ResultsFile;
+	string ResultsFileName;
+	string ResultsFilePath;
+	string ResultsFilePrompt;
+
+	if (FileExists(PrimaryTreePrompt, PrimaryTreePath, PrimaryTreeFile)
+			&& FileExists(BootTreePrompt, BootTreePath, BootTreeFile)) {
+
+
+		string PrimaryTree;
+		getline(PrimaryTreeFile, PrimaryTree);
+		PrimaryTree = Strip(PrimaryTree, delimiters);
+		vector<string> PrimaryPatterns = FindPatterns(PrimaryTree);
+
+		vector<vector<string> > BootPatterns = AcquireBootPatterns(BootTreeFile);
+
+		map<string, int> PatternCount = Count(PrimaryPatterns, BootPatterns);
+
+		cout << endl;
+		cout << "The number of primary patterns found were: " << PatternCount.size() << endl;
+		cout << "The results of the count are as follows: " << endl;
+
+		for(map<string, int>::iterator p = PatternCount.begin(); p != PatternCount.end(); ++p){
+			cout << "Pattern: " << p->first << endl;
+			cout << "Count: " << p->second << endl;
+		}
+	}
+
 	return 0;
+}
+
+//bool ObtainOutputParams(std::string Prompt, std::string& FileName, std::string& FilePath, std::ofstream& OutputFile){
+//	std::cout << Prompt << std::endl;
+//	std::cin >> FileName;
+//	OutputFile.open(FileName.c_str(), ofstream::binary);
+//	if(OutputFile.good()){
+//		return true;
+//	}else{
+//		std::cout << "The file name you entered was invalid.  Please try again." << std::endl;
+//		return ObtainOutputParams(Prompt, FileName, FilePath, OutputFile);
+//	}
+//	return false;
+//}
+
+std::string ExtractFileName(std::string FullFilePath){
+	std::string FileName;
+	int i = FullFilePath.length() - 1;
+	int j = 0;
+	while(FullFilePath[i] != '/'){
+		--i;
+		j++;
+	}
+	FileName = FullFilePath.substr(FullFilePath.size()-j);
+	return FileName;
+}
+
+std::string ExtractFilePath(std::string FullFilePath){
+	std::string FilePath;
+	int i = FullFilePath.length() - 1;
+	while(FullFilePath[i] != '/'){
+		--i;
+	}
+	++i;
+	FilePath = FullFilePath.substr(0, i);
+	return FilePath;
+}
+
+std::vector<std::vector<std::string> > AcquireBootPatterns(std::ifstream& InputFile){
+	std::vector<std::vector<std::string> > BootPatterns;
+	while(InputFile.good()){
+		std::vector<std::string> BootPattern;
+		std::string BootLine;
+		getline(InputFile, BootLine);
+		BootLine = Strip(BootLine, delimiters);
+		BootPattern = FindPatterns(BootLine);
+		BootPatterns.push_back(BootPattern);
+	}
+	return BootPatterns;
 }
 
 /*
@@ -117,8 +197,8 @@ int main() {
 std::map<std::string, int> Count(std::vector<std::string> PrimaryTree,
 		std::vector<std::vector<std::string> > BootTrees) {
 	std::map<std::string, int> PatternCounts;
-	std::cout << "We entered pattern counting." << std::endl;
-	std::cout << "The number of patterns we have are: " << PrimaryTree.size() << std::endl;
+//	std::cout << "We entered pattern counting." << std::endl;
+//	std::cout << "The number of patterns we have are: " << PrimaryTree.size() << std::endl;
 	for (int i = 0; i < PrimaryTree.size(); ++i) {
 		std::cout << "Primary pattern: " << PrimaryTree[i] << std::endl;
 		PatternCounts[PrimaryTree[i]] = 0;
@@ -327,8 +407,10 @@ bool FileExists(std::string Prompt, std::string& FilePath,
 	std::cin >> FilePath;
 	InputFile.open(FilePath.c_str());
 	if (InputFile) {
-		return false;
-	} else {
 		return true;
+	} else {
+		std::cout << "The file path you entered does not exist.  Please try again." << std::endl;
+		std::cout << std::endl;
+		return FileExists(Prompt, FilePath, InputFile);
 	}
 }
